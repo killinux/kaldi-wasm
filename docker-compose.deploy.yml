@@ -1,0 +1,56 @@
+version: '3'
+
+services:
+  docker-proxy:
+    environment:
+      CONTAINERS: 1
+    image: tecnativa/docker-socket-proxy
+    networks:
+      - traefik
+    ports:
+      - 2375
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  reverse-proxy:
+    depends_on:
+      - docker-proxy
+    image: traefik:v2.2
+    networks:
+      - default
+      - traefik
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: always
+    volumes:
+      - /opt/traefik/certs/:/certs/:ro
+      - /opt/traefik/traefik.yaml:/etc/traefik/traefik.yaml
+
+  model_server:
+    image: registry.gitlab.inria.fr/kaldi.web/kaldi-wasm/db_server:latest
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.model_server.rule=Host(`kaldi-web.loria.fr`) && PathPrefix(`/models`)"
+      - "traefik.http.routers.model_server.tls=true"
+    networks:
+      - default
+    restart: always
+    volumes:
+      - ./custom_models:/model_server/public:ro
+
+  webserver:
+    image: registry.gitlab.inria.fr/kaldi.web/kaldi-wasm/webapp:latest
+    networks:
+      - default
+    restart: always
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.webserver.rule=Host(`kaldi-web.loria.fr`)"
+      - "traefik.http.routers.webserver.tls=true"
+
+networks:
+  traefik:
+    internal: true
+  default:
+    driver: bridge
