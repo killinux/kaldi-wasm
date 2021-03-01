@@ -28,8 +28,8 @@ if [[ -z $(command -v $wasm_ld) ]]; then
 fi
 
 echo "------------ Building CLAPACK ------------"
-#cd ./clapack-wasm
-#bash install_repo.sh emcc
+cd ./clapack-wasm
+bash install_repo.sh emcc
 cd $script_dir
 
 echo "------------ Copying modified Kaldi sources ------------"
@@ -39,12 +39,12 @@ for file in $(find kaldi_rsc -type f); do
 done
 
 echo "----------- Building Openfst -----------"
-#cd ./kaldi/tools
-#emmake make CFLAGS="-O3" CXXFLAGS="-O3 -s USE_ZLIB=1" LDFLAGS=-O3 openfst
+cd ./kaldi/tools
+emmake make CFLAGS="-O3" CXXFLAGS="-O3 -s USE_ZLIB=1" LDFLAGS=-O3 openfst
 cd $script_dir
 
 echo "------------ Building Kaldi ------------"
-#./install_kaldi.sh $LAPACK_DIR
+./install_kaldi.sh $LAPACK_DIR
 
 echo "------------ Creating WASM module ------------"
 ./prepare_kaldi_wasm.sh
