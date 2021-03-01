@@ -1,0 +1,12 @@
+/kaldi
+/kaldi_git.tar.gz
+/clapack-wasm.tar.gz
+/clapack-wasm
+*.gz
+clapack
+custom_models
+dist
+dummy_serv/public
+node_modules
+src/computations
+
