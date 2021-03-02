@@ -147,10 +147,10 @@ emmake make  online2bin
 ```
 
 注意5个地方：  
-（1）。需要-O0，configure之后会生成 kaldi-wasm/kaldi/src/kaldi.mk  
+（1） 需要-O0，configure之后会生成 kaldi-wasm/kaldi/src/kaldi.mk  
 大部分参数都在这里 ，所以要sed把-O1的部分都改成-O0  
-（2）这个 -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx  -msimd128 的支持，没有浏览器会报错 
-（3） ERROR_ON_UNDEFINED_SYMBOLS=0 ，popen和main的问题似乎忽略不掉，主要是这两个的 undefined错误给屏蔽掉  
+（2）这个 -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx  -msimd128 的支持，没有浏览器会报错   
+（3） ERROR_ON_UNDEFINED_SYMBOLS=0 ，popen和main的问题似乎忽略不掉，主要是这两个的 undefined错误给屏蔽掉   
 （4）需要--bind ，__em_regist_class类似的错误会存在undefined错误，加个这个就好了  
 （5） 如果出现大量undefine，别急着去用ERROR_ON_UNDEFINED_SYMBOLS 屏蔽，有可能是动态库的问题，尝试用静态库解决，也不要急着用-s EXPORT_ALL=1，去解决，因为生成的包太大了    
 
@@ -183,6 +183,7 @@ em++ -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx  -msimd128 -s EXPORTED_
 em++ -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx  -msimd128 -s EXPORTED_FUNCTIONS=['_popen','_main']  $EM_OPTS    online2-tcp-nnet3-decode-faster-reorganized.o ../online2/kaldi-online2.a ../ivector/kaldi-ivector.a ../nnet3/kaldi-nnet3.a ../chain/kaldi-chain.a ../nnet2/kaldi-nnet2.a ../cudamatrix/kaldi-cudamatrix.a ../decoder/kaldi-decoder.a ../lat/kaldi-lat.a ../fstext/kaldi-fstext.a ../hmm/kaldi-hmm.a ../feat/kaldi-feat.a ../transform/kaldi-transform.a ../gmm/kaldi-gmm.a ../tree/kaldi-tree.a ../util/kaldi-util.a ../matrix/kaldi-matrix.a ../base/kaldi-base.a   ../../../kaldi/tools/openfst-1.6.7/lib/libfst.a ../../../clapack-wasm/CLAPACK-3.2.1/lapack.a ../../../clapack-wasm/CLAPACK-3.2.1/libcblaswr.a ../../../clapack-wasm/CBLAS/lib/cblas.a ../../../clapack-wasm/f2c_BLAS-3.8.0/blas.a ../../../clapack-wasm/libf2c/libf2c.a -lm  -ldl  -o  $WASM_NAME.js
 ```
 
+因为加了 -s ERROR_ON_UNDEFINED_SYMBOLS=0 ，所以会有两个警告，忽略吧，popen暂时解决不了，浏览器下就没问题了，不加这个参数会报错。 
 
 ```shell
 ------------ Creating WASM module ------------
@@ -207,12 +208,13 @@ emcc -O0 -s WASM=1 -s MODULARIZE=1 -s ENVIRONMENT='worker' -s BUILD_AS_WORKER=1 
      audio-resampler/em_src/resampleTo16bint.c audio-resampler/src/*.c
 ```
 
-# 6.把模型相关文件放到相应位置 就启动npm start
+# 6.把模型相关文件放到相应位置 dummy_serv/public下
 
-kaldi-wasm/dummy_serv/public/english_small.zip
+
+kaldi-wasm/dummy_serv/public/english_small.zip  
 english_small.zip 去https://github.com/killinux/kaldi-wasm-zips 下载
 
-这个模型的结构是这样的
+这个模型的结构是这样的，具体内容参考kaldi的使用
 
 <pre>
 .
@@ -264,6 +266,22 @@ vim package.json
 "scripts": {
 	"start": "(cd dummy_serv && node server.js) & webpack-dev-server --host 0.0.0.0 --open",
 ```
+.babelrc  
+```javascript
+{
+    "presets": [
+      [ "@babel/preset-env", {
+          "targets": "last 2 Firefox versions"
+        }
+      ],
+      "@babel/preset-react"
+    ],
+    "plugins": [
+      "transform-async-functions"
+    ]
+}
+```
+启动node服务
 ```shell
 npm install  
 npm start   
