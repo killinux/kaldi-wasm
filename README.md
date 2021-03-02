@@ -1,23 +1,20 @@
 # 需要注意的点
 
-1.先编译clapack-wasm 线性代数库
+1.先编译clapack-wasm 线性代数库 
 2.再编译kaldi/tools下的openfst，这里注意要禁用动态库，在tools/Makefile里--enable-shared改成--disable-shared，否则emcc动态库不完全符合linux和mac的编译方式
 3.编译kaldi/src下的内容，最终接口都在online2bin下，wasm新增了一个出口：online2-tcp-nnet3-decode-faster-reorganized.cc，从这步开始编译优化选项-O0，方便调试
 4.编译解码器到src/computations 下 
-5.启动node服务，模型文件需要放在dummy_serv/public 下
+5.启动node服务，模型文件需要放在dummy_serv/public 下(https://github.com/killinux/kaldi-wasm-zips)去这里下载
 
+2020.03.02更新,注意git代码的版本
 
 # 需要的包：
 把kaldi和  clapack-wasm copy到 kaldi-wasm下
 ```shell
-cp kaldi_git.tar.gz kaldi-wasm
-cp clapack-wasm.tar.gz kaldi-wasm
-
-tar xvf kaldi_git.tar.gz
-tar xvf clapack-wasm.tar.gz
-
+cd kaldi-wasm
+git clone https://gitlab.inria.fr/kaldi.web/clapack-wasm
+git clone https://github.com/kaldi-asr/kaldi
 cp openfst-1.6.7.tar.gz  kaldi-wasm/kaldi/tools
-
 
 cd kaldi-wasm/kaldi
 git log
@@ -209,6 +206,7 @@ emcc -O0 -s WASM=1 -s MODULARIZE=1 -s ENVIRONMENT='worker' -s BUILD_AS_WORKER=1 
 # 6.把模型相关文件放到相应位置 就启动npm start
 
 kaldi-wasm/dummy_serv/public/english_small.zip
+english_small.zip 去https://github.com/killinux/kaldi-wasm-zips 下载
 
 这个模型的结构是这样的
 
