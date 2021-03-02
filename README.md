@@ -1,8 +1,15 @@
+# 需要注意的点
+
+1.先编译clapack-wasm 线性代数库
+2.再编译kaldi/tools下的openfst，这里注意要禁用动态库，在tools/Makefile里--enable-shared改成--disable-shared，否则emcc动态库不完全符合linux和mac的编译方式
+3.编译kaldi/src下的内容，最终接口都在online2bin下，wasm新增了一个出口：online2-tcp-nnet3-decode-faster-reorganized.cc，从这步开始编译优化选项-O0，方便调试
+4.编译解码器到src/computations 下 
+5.启动node服务，模型文件需要放在dummy_serv/public 下
 
 
-1.需要的包：
+# 需要的包：
 把kaldi和  clapack-wasm copy到 kaldi-wasm下
-
+```shell
 cp kaldi_git.tar.gz kaldi-wasm
 cp clapack-wasm.tar.gz kaldi-wasm
 
@@ -33,10 +40,11 @@ Date:   Wed Dec 9 09:13:21 2020 +0100
     Update kaldi with latest version
 
     See merge request kaldi.web/kaldi-wasm!19
+```
 
 
-
-环境：
+# 环境：
+```
 emcc --version
 emcc (Emscripten gcc/clang-like replacement + linker emulating GNU ld) 2.0.14 (8dd277d191daee9adfad03e5f0663df2db4b8bb1)
 Copyright (C) 2014 the Emscripten authors (see AUTHORS.txt)
@@ -45,7 +53,7 @@ There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR P
 
 uname -a
 Linux ali0227 5.4.0-65-generic #73-Ubuntu SMP Mon Jan 18 17:25:17 UTC 2021 x86_64 x86_64 x86_64 GNU/Linux
-
+```
 
 存在问题：
 popen undefine的问题是搞不定的，放弃吧，忽略他 -s ERROR_ON_UNDEFINED_SYMBOLS=0
@@ -55,27 +63,35 @@ popen undefine的问题是搞不定的，放弃吧，忽略他 -s ERROR_ON_UNDEF
 安装：和修改的内容：
 关键点：./install_kaldi.sh 之后需要 编译优化成-O0
 
-步骤：
+# 安装步骤：
 
-1. 安装CLAPACK不需要修改，直接在install.sh里面就可以
+# 1. 安装CLAPACK不需要修改，直接在install.sh里面就可以
+
+```shell
+
 echo "------------ Building CLAPACK ------------"
 cd ./clapack-wasm
 bash install_repo.sh emcc
 cd $script_dir
 
-2.安装kaldi/tools 
+```
+
+# 2.安装kaldi/tools 
 在ubuntu下，是不是动态库有问题，需要disable一下shared
 
 vim kaldi-wasm/kaldi/toos/Makefile
+```shell
 OPENFST_CONFIGURE ?= --enable-static --enable-shared --enable-far \
                      --enable-ngram-fsts --enable-lookahead-fsts --with-pic
-
+```
 改成
+```shell
 OPENFST_CONFIGURE ?= --enable-static --disable-shared --enable-far \
                      --enable-ngram-fsts --enable-lookahead-fsts --with-pic
-
+```
 
 可以省去这些-rpath的警告
+```javascript
 em++: warning: ignoring dynamic library libfstfar.so because not compiling to JS or HTML, remember to link it when compiling to JS or HTML at the end [-Wemcc]
 em++: warning: ignoring dynamic library libfstscript.so because not compiling to JS or HTML, remember to link it when compiling to JS or HTML at the end [-Wemcc]
 em++: warning: ignoring dynamic library libfst.so because not compiling to JS or HTML, remember to link it when compiling to JS or HTML at the end [-Wemcc]
@@ -85,41 +101,38 @@ em++: warning: ignoring unsupported linker flag: `-rpath` [-Wlinkflags]
 em++: warning: ignoring unsupported linker flag: `-rpath` [-Wlinkflags]
 em++: warning: ignoring unsupported linker flag: `-rpath` [-Wlinkflags]
 em++: warning: ignoring unsupported linker flag: `-soname` [-Wlinkflags]
-
+```
 思考： 是否是哪些undefine的问题也是因为动态库的问题 ，看来是了，在ubuntu20.04下，undefine的错误和奇怪的警告不见了
-
-ubuntu和mac都过了，槽
-
-
-
-
 
 
 
 install.sh中的
+```shell
 echo "----------- Building Openfst -----------"
 cd ./kaldi/tools
 emmake make CFLAGS="-O3" CXXFLAGS="-O3 -s USE_ZLIB=1" LDFLAGS=-O3 openfst
 cd $script_dir
+```
+这个不变,注意禁用动态库就好
 
-这个不变
 
 
+# 3.安装kaldi 
 
-3.安装kaldi ，这个需要修改
+这个需要修改-O0和-s ERROR_ON_UNDEFINED_SYMBOLS=0 ，把popen和main的错误变成警告
 
+```shell
 echo "------------ Building Kaldi ------------"
 #./install_kaldi.sh $LAPACK_DIR
-
-CXXFLAGS="-O0 -U HAVE_EXECINFO_H -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx  -msimd128"
-LDFLAGS="-O0 -s ERROR_ON_UNDEFINED_SYMBOLS=0 -s EXPORTED_FUNCTIONS=['_popen','_main'] --bind"
-或
 CXXFLAGS="-O0 -U HAVE_EXECINFO_H -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx  -msimd128"
 LDFLAGS="-O0 -s ERROR_ON_UNDEFINED_SYMBOLS=0 -s EXPORTED_FUNCTIONS=['_main'] --bind"
 
 # this -O0 need then
+```
 
+最终生成的kaldi.mk ,这里需要用sed 把-O1改成-O0，另外DEBUG_LEVEL不要修改
 
+```shell
 cd kaldi/src
 CXXFLAGS="$CXXFLAGS" LDFLAGS="$LDFLAGS" emconfigure ./configure --use-cuda=no \
     --static --clapack-root=../../"$LAPACK_DIR" --host=WASM
@@ -131,7 +144,7 @@ sed -i -e 's:-O1:-O0:g; ' kaldi.mk
 emmake make -j clean depend
 #emmake make -j $(nproc) online2bin
 emmake make  online2bin
-
+```
 
 注意5个地方：
 （1）。需要-O0，configure之后会生成 kaldi-wasm/kaldi/src/kaldi.mk
@@ -143,7 +156,10 @@ emmake make  online2bin
 
 
 
-4. 把编译后的kaldi的基础组件拼接器来，编译出解码器，主要是 online2-tcp-nnet3-decode-faster-reorganized.cc 生成到 kaldiJS.js和kaldiJS.wasm到
+# 4. 把编译后的kaldi的基础组件拼接器来，编译出解码器
+
+主要是 online2-tcp-nnet3-decode-faster-reorganized.cc 生成到 kaldiJS.js和kaldiJS.wasm到
+
 kaldi-wasm/src/computations下
 
 prepare_kaldi_wasm.sh
@@ -153,17 +169,19 @@ cp $PROGRAM $PROGRAM.bc
 这玩意想直接就用？？？？？什么原理，怎么想的，难道有什么隐含逻辑没搞懂？？
 
 去官方的ci里看编译过程，修改如下
-
+```shell
 #cp $PROGRAM $PROGRAM.bc
 #em++ $EM_OPTS -o $WASM_NAME.js $PROGRAM.bc
+```
 把这两行改成
 
+```shell
 em++ -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx  -msimd128 -s EXPORTED_FUNCTIONS=['_popen','_main']  $EM_OPTS    online2-tcp-nnet3-decode-faster-reorganized.o ../online2/kaldi-online2.a ../ivector/kaldi-ivector.a ../nnet3/kaldi-nnet3.a ../chain/kaldi-chain.a ../nnet2/kaldi-nnet2.a ../cudamatrix/kaldi-cudamatrix.a ../decoder/kaldi-decoder.a ../lat/kaldi-lat.a ../fstext/kaldi-fstext.a ../hmm/kaldi-hmm.a ../feat/kaldi-feat.a ../transform/kaldi-transform.a ../gmm/kaldi-gmm.a ../tree/kaldi-tree.a ../util/kaldi-util.a ../matrix/kaldi-matrix.a ../base/kaldi-base.a   /opt/emscripten/kaldi-wasm/kaldi/tools/openfst-1.6.7/lib/libfst.a /opt/emscripten/kaldi-wasm/clapack-wasm/CLAPACK-3.2.1/lapack.a /opt/emscripten/kaldi-wasm/clapack-wasm/CLAPACK-3.2.1/libcblaswr.a /opt/emscripten/kaldi-wasm/clapack-wasm/CBLAS/lib/cblas.a /opt/emscripten/kaldi-wasm/clapack-wasm/f2c_BLAS-3.8.0/blas.a /opt/emscripten/kaldi-wasm/clapack-wasm/libf2c/libf2c.a -lm  -ldl  -o  $WASM_NAME.js
-
+```
 或者相对位置
-
+```shell
 em++ -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx  -msimd128 -s EXPORTED_FUNCTIONS=['_popen','_main']  $EM_OPTS    online2-tcp-nnet3-decode-faster-reorganized.o ../online2/kaldi-online2.a ../ivector/kaldi-ivector.a ../nnet3/kaldi-nnet3.a ../chain/kaldi-chain.a ../nnet2/kaldi-nnet2.a ../cudamatrix/kaldi-cudamatrix.a ../decoder/kaldi-decoder.a ../lat/kaldi-lat.a ../fstext/kaldi-fstext.a ../hmm/kaldi-hmm.a ../feat/kaldi-feat.a ../transform/kaldi-transform.a ../gmm/kaldi-gmm.a ../tree/kaldi-tree.a ../util/kaldi-util.a ../matrix/kaldi-matrix.a ../base/kaldi-base.a   ../../../kaldi/tools/openfst-1.6.7/lib/libfst.a ../../../clapack-wasm/CLAPACK-3.2.1/lapack.a ../../../clapack-wasm/CLAPACK-3.2.1/libcblaswr.a ../../../clapack-wasm/CBLAS/lib/cblas.a ../../../clapack-wasm/f2c_BLAS-3.8.0/blas.a ../../../clapack-wasm/libf2c/libf2c.a -lm  -ldl  -o  $WASM_NAME.js
-
+```
 
 
 
@@ -174,10 +192,10 @@ warning: undefined symbol: popen (referenced by top-level compiled C/C++ code)
 这俩忽略吧，因为有这个在 -s ERROR_ON_UNDEFINED_SYMBOLS=0，否则就报错了，popen查了半天就是不支持，到浏览器里就好了
 
 
-5. 编译采样率的js ，把-O3改成-O0
+# 5. 编译采样率的js ，把-O3改成-O0
 
 build_other_wasm.sh
-
+```shell
 #emcc -O3 -s WASM=1 -s MODULARIZE=1 -s ENVIRONMENT='worker' -s BUILD_AS_WORKER=1 \
 
 emcc -O0 -s WASM=1 -s MODULARIZE=1 -s ENVIRONMENT='worker' -s BUILD_AS_WORKER=1 \
@@ -186,13 +204,14 @@ emcc -O0 -s WASM=1 -s MODULARIZE=1 -s ENVIRONMENT='worker' -s BUILD_AS_WORKER=1 
      --post-js audio-resampler/em_src/resampleTo16bint_post.js \
      -I audio-resampler/src -o src/computations/resampleTo16bint.js \
      audio-resampler/em_src/resampleTo16bint.c audio-resampler/src/*.c
+```
 
-
-5.把模型相关文件放到相应位置 就启动npm start
+# 6.把模型相关文件放到相应位置 就启动npm start
 
 kaldi-wasm/dummy_serv/public/english_small.zip
 
 这个模型的结构是这样的
+
 .
 ├── AUTHORS
 ├── conf
@@ -215,12 +234,10 @@ kaldi-wasm/dummy_serv/public/english_small.zip
 └── README.md
 
 
-
-
-6.修改nodejs相关配置，让外网也能访问
+# 7.修改nodejs相关配置，让外网也能访问
 
 vim webpack.config.js
-
+```javascript
 module.exports = {
   devServer: {
     host: 'localhost',
@@ -231,17 +248,19 @@ module.exports = {
       },
     },
   },
-
+````
 localhost改成server的ip
 
 vim package.json
+```javascript
 "scripts": {
     "start": "(cd dummy_serv && node server.js) & webpack-dev-server --open",
-
+```
 改成
+```javascript
 "scripts": {
 	"start": "(cd dummy_serv && node server.js) & webpack-dev-server --host 0.0.0.0 --open",
-
+````
 
 npm install
 npm start 
@@ -259,6 +278,7 @@ helper中的相关方法全都改成async 前缀  ，参考asrWorker.js里面改
 
 
 最后几行改成这样
+```javascript
 onmessage = (msg) => {
   const { command } = msg.data;
   const response = { command, ok: true };
@@ -290,9 +310,10 @@ if (command in helper) {
 //  resampleMod.init();
 //  resample = resampleMod.resampleTo16bint;
 //};
-
+```
 
 helper里面修改，这里调用了then
+```javascript
 //-----add by hao for a globle var translate resampleJS to resampleJS.then  begin
 var thisresampleMod;
 //-----add by hao for a globle var translate resampleJS to resampleJS.then  end
@@ -327,7 +348,7 @@ const helper = {
     return '';
   },
 };
-
+```
 
 
 
@@ -341,7 +362,7 @@ Error: command "init" failed: TypeError: Cannot read property 'mkdir' of undefin
 尝试修改 asrWorker.js
 
 新增 var thisModule; 作为kaldiJS.then返回的对象保存 注意把kaldiModule 都改成thisModule
-
+```javascript
 //-----add by hao for globle Promise.then return to thisModule  ---begin
 var thisModule;
 //-----add by hao for globle Promise.then return to thisModule  ---end
@@ -369,9 +390,10 @@ async function loadToFS(modelName, zip) {
   }));
   return true;
 }
-
+```
 另一个地方：
 
+```javascript
 
 /*
  * Assumes that we are in the directory with the requested model
@@ -387,24 +409,28 @@ async function loadToFS(modelName, zip) {
 //}
 //-----modify  by hao for startASR,change kaldiModule to Promise.then globle thisModule
 function startASR() {
-  parser = new KaldiConfigParser(thisModule.FS, thisModule.FS.cwd());
-  const args = parser.createArgs();
-  const cppArgs = args.reduce((wasmArgs, arg) => {
+    parser = new KaldiConfigParser(thisModule.FS, thisModule.FS.cwd());
+    const args = parser.createArgs();
+    const cppArgs = args.reduce((wasmArgs, arg) => {
     wasmArgs.push_back(arg);
     return wasmArgs;
-  }, new thisModule.StringList());
-  return new thisModule.OnlineASR(cppArgs);
+    }, new thisModule.StringList());
+    return new thisModule.OnlineASR(cppArgs);
 }
-
+```
 #########检查编译通过
 
+ubuntu20.04 编译通过
+macOS Big Sur 版本11.1 编译通过
+CentOS Linux release 7.9.2009 (Core) 编译通过
+emscripten 1.40.1  编译通过
+emscripten 1.40.0  编译通过
+emscripten 2.0.14  编译通过
 
-ubuntu20.04 检查通过
-
-
-
-
-
+备注：
+chrome调试的时候偶尔可能会永奥
+cd /Applications/Google Chrome.app/Contents/MacOS
+./Google\ Chrome --js-flags="--experimental-wasm-simd"
 
 
 
