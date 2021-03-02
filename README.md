@@ -3,11 +3,11 @@
 
 # 需要注意的点
 
-1.先编译clapack-wasm 线性代数库 
-2.再编译kaldi/tools下的openfst，这里注意要禁用动态库，在tools/Makefile里--enable-shared改成--disable-shared，否则emcc动态库不完全符合linux和mac的编译方式
-3.编译kaldi/src下的内容，最终接口都在online2bin下，wasm新增了一个出口：online2-tcp-nnet3-decode-faster-reorganized.cc，从这步开始编译优化选项-O0，方便调试
-4.编译解码器到src/computations 下 
-5.启动node服务，模型文件需要放在dummy_serv/public 下(https://github.com/killinux/kaldi-wasm-zips)去这里下载
+1.先编译clapack-wasm 线性代数库  
+2.再编译kaldi/tools下的openfst，这里注意要禁用动态库，在tools/Makefile里--enable-shared改成--disable-shared，否则emcc动态库不完全符合linux和mac的编译方式  
+3.编译kaldi/src下的内容，最终接口都在online2bin下，wasm新增了一个出口：online2-tcp-nnet3-decode-faster-reorganized.cc，从这步开始编译优化选项-O0，方便调试  
+4.编译解码器到src/computations 下   
+5.启动node服务，模型文件需要放在dummy_serv/public 下(https://github.com/killinux/kaldi-wasm-zips)去这里下载    
 
 2020.03.02更新,注意git代码的版本
 
@@ -147,12 +147,12 @@ emmake make  online2bin
 ```
 
 注意5个地方：
-（1）。需要-O0，configure之后会生成 kaldi-wasm/kaldi/src/kaldi.mk
-大部分参数都在这里 ，所以要sed把-O1的部分都改成-O0
-（2）这个 -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx  -msimd128 的支持，没有浏览器会报错，
-（3） ERROR_ON_UNDEFINED_SYMBOLS=0 ，popen和main的问题似乎忽略不掉，主要是这两个的undefined错误给屏蔽掉
-（4）需要--bind ，__em_regist_class类似的错误会存在undefined错误，加个这个就好了
-（5） 如果出现大量undefine，别急着去用ERROR_ON_UNDEFINED_SYMBOLS 屏蔽，有可能是动态库的问题，尝试用静态库解决，也不要急着用-s EXPORT_ALL=1，去解决，因为生成的包太大了，
+（1）。需要-O0，configure之后会生成 kaldi-wasm/kaldi/src/kaldi.mk  
+大部分参数都在这里 ，所以要sed把-O1的部分都改成-O0  
+（2）这个 -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx  -msimd128 的支持，没有浏览器会报错 
+（3） ERROR_ON_UNDEFINED_SYMBOLS=0 ，popen和main的问题似乎忽略不掉，主要是这两个的 undefined错误给屏蔽掉  
+（4）需要--bind ，__em_regist_class类似的错误会存在undefined错误，加个这个就好了  
+（5） 如果出现大量undefine，别急着去用ERROR_ON_UNDEFINED_SYMBOLS 屏蔽，有可能是动态库的问题，尝试用静态库解决，也不要急着用-s EXPORT_ALL=1，去解决，因为生成的包太大了    
 
 
 
@@ -213,6 +213,7 @@ english_small.zip 去https://github.com/killinux/kaldi-wasm-zips 下载
 
 这个模型的结构是这样的
 
+<pre>
 .
 ├── AUTHORS
 ├── conf
@@ -233,7 +234,7 @@ english_small.zip 去https://github.com/killinux/kaldi-wasm-zips 下载
 ├── kaldi_config.json
 ├── LICENSE
 └── README.md
-
+</pre>
 
 # 7.修改nodejs相关配置，让外网也能访问
 
