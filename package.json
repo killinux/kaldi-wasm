@@ -4,7 +4,7 @@
   "description": "PoC of kaldi client side",
   "main": "index.js",
   "scripts": {
-    "start": "(cd dummy_serv && node server.js) & webpack-dev-server --open",
+    "start": "(cd dummy_serv && node server.js) & webpack-dev-server --host=0.0.0.0 --open",
     "build": "webpack --mode production",
     "test": "echo \"Error: no test specified\" && exit 1",
     "lint": "eslint --ext .js,.jsx src"
