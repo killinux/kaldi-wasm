@@ -1,13 +1,13 @@
 最终样子：
 ![image](https://github.com/killinux/kaldi-wasm/blob/main/kaldi-wasm.png)
 
-# 需要注意的点
+# 需要注意的点  
 
 1.先编译clapack-wasm 线性代数库  
 2.再编译kaldi/tools下的openfst，这里注意要禁用动态库，在tools/Makefile里--enable-shared改成--disable-shared，否则emcc动态库不完全符合linux和mac的编译方式  
 3.编译kaldi/src下的内容，最终接口都在online2bin下，wasm新增了一个出口：online2-tcp-nnet3-decode-faster-reorganized.cc，从这步开始编译优化选项-O0，方便调试  
 4.编译解码器到src/computations 下   
-5.启动node服务，模型文件需要放在dummy_serv/public 下(https://github.com/killinux/kaldi-wasm-zips)去这里下载    
+5.启动node服务，模型文件需要放在dummy_serv/public 下,(https://github.com/killinux/kaldi-wasm-zips) 去这里下载    
 
 2020.03.02更新,注意git代码的版本
 
@@ -146,7 +146,7 @@ emmake make -j clean depend
 emmake make  online2bin
 ```
 
-注意5个地方：
+注意5个地方：  
 （1）。需要-O0，configure之后会生成 kaldi-wasm/kaldi/src/kaldi.mk  
 大部分参数都在这里 ，所以要sed把-O1的部分都改成-O0  
 （2）这个 -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx  -msimd128 的支持，没有浏览器会报错 
@@ -184,10 +184,11 @@ em++ -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx  -msimd128 -s EXPORTED_
 ```
 
 
-
+```shell
 ------------ Creating WASM module ------------
 warning: undefined symbol: MAIN__ (referenced by top-level compiled C/C++ code)
 warning: undefined symbol: popen (referenced by top-level compiled C/C++ code)
+```
 
 这俩忽略吧，因为有这个在 -s ERROR_ON_UNDEFINED_SYMBOLS=0，否则就报错了，popen查了半天就是不支持，到浏览器里就好了
 
@@ -250,7 +251,7 @@ module.exports = {
       },
     },
   },
-````
+```
 localhost改成server的ip
 
 vim package.json
@@ -262,14 +263,14 @@ vim package.json
 ```javascript
 "scripts": {
 	"start": "(cd dummy_serv && node server.js) & webpack-dev-server --host 0.0.0.0 --open",
-````
-
-npm install
-npm start 
-
+```
+```shell
+npm install  
+npm start   
+```
 浏览器打开https 的8080端口
 
-7. 会存在同步异步的问题 ，需要修改一下前端的代码
+# 8. 会存在同步异步的问题 ，需要修改一下前端的代码
 
 
 kaldi-wasm/src/workers/resamplerWorker.js
@@ -354,10 +355,12 @@ const helper = {
 
 
 
-下面修改asrWorker.js如果不改 会报类似：
+下面修改asrWorker.js如果不改 会报类似：  
+```javascript
 Error: command "init" failed: TypeError: Cannot read property 'mkdir' of undefined
     at eval (workerWrapper.js:19)
     at Worker.handleMessage (workerWrapper.js:35)
+```
 
 这个是因为kaldiJS 没有then ，对象里的FS没有生成
 
@@ -420,19 +423,19 @@ function startASR() {
     return new thisModule.OnlineASR(cppArgs);
 }
 ```
-#########检查编译通过
+#########检查编译通过  
 
-ubuntu20.04 编译通过
-macOS Big Sur 版本11.1 编译通过
-CentOS Linux release 7.9.2009 (Core) 编译通过
-emscripten 1.40.1  编译通过
-emscripten 1.40.0  编译通过
-emscripten 2.0.14  编译通过
+ubuntu20.04 编译通过  
+macOS Big Sur 版本11.1 编译通过  
+CentOS Linux release 7.9.2009 (Core) 编译通过  
+emscripten 1.40.1  编译通过  
+emscripten 1.40.0  编译通过  
+emscripten 2.0.14  编译通过  
 
-备注：
-chrome调试的时候偶尔可能会永奥
-cd /Applications/Google Chrome.app/Contents/MacOS
-./Google\ Chrome --js-flags="--experimental-wasm-simd"
+备注：  
+chrome调试的时候偶尔可能会用到 ,如果编译不加-msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mavx  -msimd128 ，就需要启动chrome的时候加
+cd /Applications/Google Chrome.app/Contents/MacOS  
+./Google\ Chrome --js-flags="--experimental-wasm-simd"  
 
 
 
