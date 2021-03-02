@@ -1,6 +1,5 @@
 最终样子：
-
-
+![image](https://github.com/killinux/kaldi-wasm/blob/main/kaldi-wasm.png)
 
 # 需要注意的点
 
