@@ -40,6 +40,7 @@ done
 
 echo "----------- Building Openfst -----------"
 cd ./kaldi/tools
+sed -i -e 's:--enable-shared:--disable-shared:g; ' Makefile
 emmake make CFLAGS="-O3" CXXFLAGS="-O3 -s USE_ZLIB=1" LDFLAGS=-O3 openfst
 cd $script_dir
 
