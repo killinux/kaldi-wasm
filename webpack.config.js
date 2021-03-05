@@ -3,11 +3,11 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   devServer: {
-    host: 'localhost',
+    host: '121.5.59.140',
     https: true,
     proxy: {
       '/models': {
-        target: 'http://localhost:3000',
+        target: 'http://121.5.59.140:3000',
       },
     },
   },

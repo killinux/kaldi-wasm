@@ -18,5 +18,5 @@ sed -i -e 's:-O1:-O0:g; ' kaldi.mk
 
 emmake make -j clean depend
 #emmake make -j $(nproc) online2bin
-emmake make -j online2bin
+emmake make  online2bin
 

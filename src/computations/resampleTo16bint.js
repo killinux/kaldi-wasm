@@ -648,11 +648,14 @@ var wasmMemory;
 // In fastcomp asm.js, we don't need a wasm Table at all.
 // In the wasm backend, we polyfill the WebAssembly object,
 // so this creates a (non-native-wasm) table for us.
+
 var wasmTable = new WebAssembly.Table({
   'initial': 16,
   'maximum': 16 + 0,
   'element': 'anyfunc'
 });
+
+
 
 
 //========================================
@@ -2133,6 +2136,12 @@ var dynCall_vi = Module["dynCall_vi"] = createExportWrapper("dynCall_vi");
 var dynCall_iii = Module["dynCall_iii"] = createExportWrapper("dynCall_iii");
 
 /** @type {function(...*):?} */
+var dynCall_iidiiii = Module["dynCall_iidiiii"] = createExportWrapper("dynCall_iidiiii");
+
+/** @type {function(...*):?} */
+var dynCall_vii = Module["dynCall_vii"] = createExportWrapper("dynCall_vii");
+
+/** @type {function(...*):?} */
 var dynCall_ii = Module["dynCall_ii"] = createExportWrapper("dynCall_ii");
 
 /** @type {function(...*):?} */
@@ -2141,13 +2150,7 @@ var dynCall_iiii = Module["dynCall_iiii"] = createExportWrapper("dynCall_iiii");
 /** @type {function(...*):?} */
 var dynCall_jiji = Module["dynCall_jiji"] = createExportWrapper("dynCall_jiji");
 
-/** @type {function(...*):?} */
-var dynCall_iidiiii = Module["dynCall_iidiiii"] = createExportWrapper("dynCall_iidiiii");
-
-/** @type {function(...*):?} */
-var dynCall_vii = Module["dynCall_vii"] = createExportWrapper("dynCall_vii");
-
-Module['_converter'] = 1464528;
+Module['_converter'] = 1464520;
 
 
 

@@ -696,11 +696,14 @@ var wasmMemory;
 // In fastcomp asm.js, we don't need a wasm Table at all.
 // In the wasm backend, we polyfill the WebAssembly object,
 // so this creates a (non-native-wasm) table for us.
+
 var wasmTable = new WebAssembly.Table({
   'initial': 1988,
   'maximum': 1988 + 0,
   'element': 'anyfunc'
 });
+
+
 
 
 //========================================
@@ -1317,11 +1320,11 @@ function updateGlobalBufferAndViews(buf) {
 }
 
 var STATIC_BASE = 1024,
-    STACK_BASE = 5458752,
+    STACK_BASE = 5458768,
     STACKTOP = STACK_BASE,
-    STACK_MAX = 215872,
-    DYNAMIC_BASE = 5458752,
-    DYNAMICTOP_PTR = 215712;
+    STACK_MAX = 215888,
+    DYNAMIC_BASE = 5458768,
+    DYNAMICTOP_PTR = 215728;
 
 assert(STACK_BASE % 16 === 0, 'stack must start aligned');
 assert(DYNAMIC_BASE % 16 === 0, 'heap must start aligned');
@@ -1886,7 +1889,7 @@ var ASM_CONSTS = {
 
 
 
-// STATICTOP = STATIC_BASE + 214848;
+// STATICTOP = STATIC_BASE + 214864;
 /* global initializers */  __ATINIT__.push({ func: function() { ___wasm_call_ctors() } });
 
 
@@ -6762,7 +6765,7 @@ var ASM_CONSTS = {
     }
 
   function _emscripten_get_sbrk_ptr() {
-      return 215712;
+      return 215728;
     }
 
   function _emscripten_memcpy_big(dest, src, num) {
@@ -7629,10 +7632,10 @@ var ___getTypeName = Module["___getTypeName"] = createExportWrapper("__getTypeNa
 var ___embind_register_native_and_builtin_types = Module["___embind_register_native_and_builtin_types"] = createExportWrapper("__embind_register_native_and_builtin_types");
 
 /** @type {function(...*):?} */
-var _htonl = Module["_htonl"] = createExportWrapper("htonl");
+var _ntohs = Module["_ntohs"] = createExportWrapper("ntohs");
 
 /** @type {function(...*):?} */
-var _ntohs = Module["_ntohs"] = createExportWrapper("ntohs");
+var _htonl = Module["_htonl"] = createExportWrapper("htonl");
 
 /** @type {function(...*):?} */
 var _setThrew = Module["_setThrew"] = createExportWrapper("setThrew");

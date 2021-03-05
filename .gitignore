@@ -9,4 +9,8 @@ dist
 dummy_serv/public
 node_modules
 src/computations
-
+src/computations/kaldiJS.js
+src/computations/kaldiJS.wasm
+src/computations/resampleTo16bint.js
+src/computations/resampleTo16bint.wasm
+a.out
