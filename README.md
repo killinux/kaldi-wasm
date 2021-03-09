@@ -1,3 +1,5 @@
+离线的语音识别的例子,
+kaldi编译到浏览器里
 最终样子：
 ![image](https://github.com/killinux/kaldi-wasm/blob/main/kaldi-wasm.png)
 
